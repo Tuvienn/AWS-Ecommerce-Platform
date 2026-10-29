@@ -1,0 +1,3 @@
+# Runtime uploads chỉ tồn tại theo environment; không commit object file.
+*
+!.gitignore

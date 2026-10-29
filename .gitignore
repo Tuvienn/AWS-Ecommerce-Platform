@@ -1,0 +1,23 @@
+# Secrets và cấu hình riêng của môi trường
+.env
+.env.*
+!.env.example
+
+# Dependency được cài cục bộ
+/vendor/
+
+# Runtime data
+/storage/logs/*
+!/storage/logs/.gitignore
+/storage/uploads/*
+!/storage/uploads/.gitignore
+/storage/cache/
+/storage/tmp/
+
+# File hệ điều hành và IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+

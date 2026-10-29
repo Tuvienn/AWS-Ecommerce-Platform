@@ -1,4 +1,74 @@
 <?php
+require_once __DIR__ . '/security.php';
+require_once __DIR__ . '/storage.php';
+
+function projectConfig($section = null) {
+    $configuration = $GLOBALS['project_config'] ?? [];
+
+    if ($section === null) {
+        return $configuration;
+    }
+
+    return $configuration[$section] ?? [];
+}
+
+function appUrl($path = '') {
+    $appConfiguration = projectConfig('app');
+    $basePath = $appConfiguration['base_path'] ?? '';
+    $path = trim((string) $path);
+
+    if ($path === '' || $path === '/') {
+        return $basePath !== '' ? $basePath . '/' : '/';
+    }
+
+    if (preg_match('#^https?://#i', $path)) {
+        return $path;
+    }
+
+    if ($basePath !== '' && ($path === $basePath || strpos($path, $basePath . '/') === 0)) {
+        return $path;
+    }
+
+    return $basePath . '/' . ltrim($path, '/');
+}
+
+function assetUrl($path) {
+    return appUrl($path);
+}
+
+function contentUrl($url) {
+    $url = trim((string) $url);
+
+    if ($url === '' || $url === '#') {
+        return $url === '' ? '#' : $url;
+    }
+
+    if (preg_match('#^(?:https?:)?//#i', $url)) {
+        return $url;
+    }
+
+    $parts = parse_url($url);
+    if ($parts === false) {
+        return '#';
+    }
+
+    $path = $parts['path'] ?? '/';
+
+    // Banner seed cũ có thể chứa một deployment prefix trước products.php.
+    if (preg_match('#/products\.php$#', $path)) {
+        $path = '/products.php';
+    }
+
+    $portableUrl = $path;
+    if (isset($parts['query'])) {
+        $portableUrl .= '?' . $parts['query'];
+    }
+    if (isset($parts['fragment'])) {
+        $portableUrl .= '#' . $parts['fragment'];
+    }
+
+    return appUrl($portableUrl);
+}
 
 // Format giá tiền VND
 function formatPrice($price) {
@@ -28,6 +98,10 @@ function isAdmin() {
 }
 
 function loginUser($user) {
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_regenerate_id(true);
+    }
+
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['user_name'] = $user['fullname'];
     $_SESSION['user_role'] = $user['role'];
@@ -40,7 +114,7 @@ function getAvatarUrl($avatar, $fallbackName = 'User') {
             return $avatar;
         }
 
-        return '/WebBanHang/uploads/avatars/' . rawurlencode($avatar);
+        return runtimeImageUrl($avatar, 'uploads/avatars');
     }
 
     return 'https://ui-avatars.com/api/?name=' . urlencode($fallbackName) . '&background=010101&color=fff';
@@ -69,4 +143,8 @@ function getFlash() {
 function redirect($url) {
     header("Location: $url");
     exit;
+}
+
+function redirectTo($path) {
+    redirect(appUrl($path));
 }

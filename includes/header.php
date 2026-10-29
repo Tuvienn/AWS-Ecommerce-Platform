@@ -30,39 +30,45 @@ $menuCategories = $stmtCat->fetchAll();
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/WebBanHang/assets/css/style.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= sanitize(assetUrl('/assets/css/style.css')) ?>?v=<?= time() ?>">
+    <script>
+        window.AWS_ECOMMERCE_PLATFORM_CONFIG = <?= json_encode([
+            'basePath' => projectConfig('app')['base_path'] ?? '',
+            'csrfToken' => csrfToken(),
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+    </script>
 </head>
 <body>
 
 <!-- Header -->
 <header class="header">
     <div class="container header-main">
-        <a href="/WebBanHang/" class="logo">
+        <a href="<?= sanitize(appUrl('/')) ?>" class="logo">
             Tech<span>Shop</span>
         </a>
 
-        <form class="search-bar" action="/WebBanHang/products.php" method="GET">
+        <form class="search-bar" action="<?= sanitize(appUrl('/products.php')) ?>" method="GET">
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
             <input type="text" name="search" placeholder="Search" value="<?= isset($_GET['search']) ? sanitize($_GET['search']) : '' ?>">
         </form>
 
         <div class="header-actions">
-            <a href="/WebBanHang/cart.php" class="action-item">
+            <a href="<?= sanitize(appUrl('/cart.php')) ?>" class="action-item">
                 <div class="icon-wrapper">
                     <i class="fa-solid fa-bag-shopping"></i>
                     <?php if($cartCount > 0): ?><span class="badge"><?= $cartCount ?></span><?php endif; ?>
                 </div>
             </a>
             <?php if (isLoggedIn()): ?>
-                <a href="/WebBanHang/account.php" class="user-avatar">
+                <a href="<?= sanitize(appUrl('/account.php')) ?>" class="user-avatar">
                     <?php if (!empty($currentUserAvatar)): ?>
-                        <img src="/WebBanHang/uploads/avatars/<?= sanitize($currentUserAvatar) ?>" alt="User">
+                        <img src="<?= sanitize(getAvatarUrl($currentUserAvatar, $_SESSION['user_name'])) ?>" alt="User">
                     <?php else: ?>
                         <img src="https://ui-avatars.com/api/?name=<?= urlencode($_SESSION['user_name']) ?>&background=010101&color=fff" alt="User">
                     <?php endif; ?>
                 </a>
             <?php else: ?>
-                <a href="/WebBanHang/login.php" class="user-avatar empty-avatar">
+                <a href="<?= sanitize(appUrl('/login.php')) ?>" class="user-avatar empty-avatar">
                     <i class="fa-regular fa-user"></i>
                 </a>
             <?php endif; ?>
@@ -71,15 +77,15 @@ $menuCategories = $stmtCat->fetchAll();
 
     <div class="container header-nav">
         <ul class="nav-list">
-            <li><a href="/WebBanHang/">Home</a></li>
+            <li><a href="<?= sanitize(appUrl('/')) ?>">Home</a></li>
             <?php foreach ($menuCategories as $cat): ?>
                 <li>
-                    <a href="/WebBanHang/products.php?category=<?= $cat['id'] ?>">
+                    <a href="<?= sanitize(appUrl('/products.php?category=' . $cat['id'])) ?>">
                         <?= sanitize($cat['name']) ?>
                     </a>
                 </li>
             <?php endforeach; ?>
-            <li><a href="/WebBanHang/products.php?sale=1" class="sale-link">Sale</a></li>
+            <li><a href="<?= sanitize(appUrl('/products.php?sale=1')) ?>" class="sale-link">Sale</a></li>
         </ul>
     </div>
 </header>

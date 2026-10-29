@@ -48,6 +48,6 @@
     </div>
 </footer>
 
-<script src="/WebBanHang/assets/js/main.js?v=<?= time() ?>"></script>
+<script src="<?= sanitize(assetUrl('/assets/js/main.js')) ?>?v=<?= time() ?>"></script>
 </body>
 </html>
