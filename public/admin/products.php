@@ -133,7 +133,7 @@ $brands = $conn->query("SELECT * FROM brands ORDER BY name")->fetchAll();
 // Lấy danh sách sản phẩm
 $products = $conn->query("SELECT p.*, c.name as category_name, b.name as brand_name FROM products p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON b.id = p.brand_id ORDER BY p.is_active DESC, p.created_at DESC")->fetchAll();
 
-require_once __DIR__ . '/admin_header.php';
+require_once __DIR__ . '/../../resources/views/admin/header.php';
 ?>
 
 <div class="admin-header">
@@ -364,4 +364,4 @@ require_once __DIR__ . '/admin_header.php';
 })();
 </script>
 
-<?php require_once __DIR__ . '/admin_footer.php'; ?>
+<?php require_once __DIR__ . '/../../resources/views/admin/footer.php'; ?>

@@ -1,11 +1,5 @@
 <?php
 
-require_once PROJECT_ROOT . '/app/Storage/StorageInterface.php';
-require_once PROJECT_ROOT . '/app/Storage/StoredObject.php';
-require_once PROJECT_ROOT . '/app/Storage/LocalStorage.php';
-require_once PROJECT_ROOT . '/app/Storage/S3Storage.php';
-require_once PROJECT_ROOT . '/app/Storage/StorageFactory.php';
-
 function storage(): StorageInterface
 {
     static $storage = null;

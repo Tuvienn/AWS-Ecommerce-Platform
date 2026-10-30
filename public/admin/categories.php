@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'delet
 // Lấy danh sách danh mục + số sản phẩm
 $categories = $conn->query("SELECT c.*, COUNT(p.id) as product_count FROM categories c LEFT JOIN products p ON c.id = p.category_id GROUP BY c.id ORDER BY c.id")->fetchAll();
 
-require_once __DIR__ . '/admin_header.php';
+require_once __DIR__ . '/../../resources/views/admin/header.php';
 ?>
 
 <div class="admin-header">
@@ -132,4 +132,4 @@ require_once __DIR__ . '/admin_header.php';
     </tbody>
 </table>
 
-<?php require_once __DIR__ . '/admin_footer.php'; ?>
+<?php require_once __DIR__ . '/../../resources/views/admin/footer.php'; ?>

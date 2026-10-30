@@ -26,6 +26,7 @@ Project tập trung vào:
 - 🖼️ Product image được validate và lưu qua storage abstraction.
 - 🔐 Cấu hình portable, security hardening và HTTP/AJAX protection.
 - ☁️ Chuẩn bị kiến trúc AWS gồm EC2, RDS, S3, IAM và SSM.
+- 🧩 Cấu trúc module hóa với bootstrap, services, repositories, views và routes.
 
 ## 🎯 Mục tiêu
 
@@ -65,24 +66,38 @@ S3 private bucket cho runtime upload.
 ## 🗂️ Cấu trúc thư mục
 
 ```text
-app/        Storage adapter và service nội bộ
-config/     App, database, logging và storage configuration
-database/   Schema, migration, health check và import script
-deploy/     AWS preflight/readiness script
-docs/       Project rules, plans và testing evidence
-includes/   Bootstrap, helper, security và database access
-public/     DocumentRoot, entrypoint PHP, admin và AJAX
-storage/    Runtime logs và uploaded objects
-tests/      Integration/manual tests
-uploads/    Legacy upload data
-images/     Source image gốc
+app/
+├── Repositories/     Truy vấn dữ liệu dùng lại
+├── Services/         Nghiệp vụ checkout và order
+└── Storage/          Local/S3 storage adapter
+bootstrap/            Bootstrap ứng dụng và autoload chuyển tiếp
+config/               App, database, logging và storage configuration
+database/
+├── migrations/       Versioned SQL migrations
+└── scripts/          Health check, import, repair và migration runtime
+deploy/aws/           Preflight, readiness và application deploy script
+docs/                 Project rules, plans và testing evidence
+includes/             Compatibility layer, security, helpers và DB access
+public/               DocumentRoot, entrypoint PHP, admin và AJAX
+resources/views/      Public/admin layouts và view template
+routes/               Web, admin và AJAX route registry
+storage/              Runtime logs và uploaded objects
+tests/
+├── unit/             Unit test space
+├── integration/      Database/storage regression
+├── feature/          Feature test space
+└── manual/           Manual/debug tests
+uploads/              Legacy upload data
+images/               Source image gốc
+composer.json         Dependency contract
+composer.lock         Dependency versions lock
 ```
 
 ## 🛠️ Công nghệ & công cụ
 
 | Nhóm | Công nghệ |
 |---|---|
-| Backend | PHP 8.x, PDO |
+| Backend | PHP 8.2+, PDO |
 | Database | MySQL/MariaDB |
 | Frontend | HTML, CSS, JavaScript |
 | Runtime | Apache hoặc PHP built-in server |
@@ -111,6 +126,7 @@ set -a
 source .env
 set +a
 
+composer install
 php -S 127.0.0.1:8000 -t public
 ```
 
@@ -119,10 +135,13 @@ Mở: `http://127.0.0.1:8000`
 ## 🧪 Kiểm thử & kiểm tra
 
 ```bash
-php database/check_catalog_assets.php
+php database/scripts/check_catalog_assets.php
 bash deploy/aws/application_readiness.sh
-find public app config includes database tests -name '*.php' -print0 | xargs -0 -n1 php -l
+tests/run_regression.sh
 ```
+
+Các lệnh cũ trong `database/` vẫn được giữ compatibility wrapper; script chuẩn
+nằm trong `database/scripts/`.
 
 Catalog hiện có 17 sản phẩm, 6 danh mục và 10 thương hiệu. Health check yêu cầu
 toàn bộ product image phải `valid`, không có `missing` hoặc `invalid`.
@@ -145,9 +164,10 @@ Database lưu storage key, không lưu đường dẫn tuyệt đối. Một s�
 | EC2 | Đã tạo tại `ap-southeast-1`, instance `t3.micro` |
 | EC2 Security Group | HTTP/HTTPS public, không mở MySQL public |
 | SSM role | Đã gắn cho EC2 |
-| Local readiness | PASS |
+| Local regression/readiness | PASS khi MySQL và runtime directories sẵn sàng |
 | RDS MySQL | Chưa tạo |
-| S3 private bucket | Chưa hoàn tất xác nhận |
+| S3 adapter trong source | Đã tích hợp |
+| S3 private bucket production | Cần xác nhận bucket, IAM và migration dữ liệu |
 
 ## 🔐 Nguyên tắc bảo mật
 
@@ -166,9 +186,9 @@ Database lưu storage key, không lưu đường dẫn tuyệt đối. Một s�
 
 ## 📌 Trạng thái project
 
-Catalog repair, image import, image health check, regression và local AWS
-readiness đã PASS. Bước tiếp theo là hoàn thiện RDS/S3 private và deploy ứng
-dụng lên AWS.
+Catalog repair, image import, image health check, folder refactor và local
+regression đã hoàn tất. Bước tiếp theo là xác nhận RDS/S3 private, cài
+dependency production bằng Composer và deploy ứng dụng lên AWS.
 
 <div align="center">
 

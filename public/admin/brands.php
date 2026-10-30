@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') !== 'delet
 // Lấy danh sách nhãn hàng + số sản phẩm
 $brands = $conn->query("SELECT b.*, COUNT(p.id) as product_count FROM brands b LEFT JOIN products p ON p.brand_id = b.id AND p.is_active = 1 GROUP BY b.id ORDER BY b.name")->fetchAll();
 
-require_once __DIR__ . '/admin_header.php';
+require_once __DIR__ . '/../../resources/views/admin/header.php';
 ?>
 
 <div class="admin-header">
@@ -139,4 +139,4 @@ require_once __DIR__ . '/admin_header.php';
     </tbody>
 </table>
 
-<?php require_once __DIR__ . '/admin_footer.php'; ?>
+<?php require_once __DIR__ . '/../../resources/views/admin/footer.php'; ?>

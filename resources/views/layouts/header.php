@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/functions.php';
+require_once dirname(__DIR__, 3) . '/includes/db.php';
+require_once dirname(__DIR__, 3) . '/includes/functions.php';
 
 $cartCount = getCartCount();
 $flash = getFlash();

@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/admin_header.php';
+require_once __DIR__ . '/../../resources/views/admin/header.php';
 
 // Tổng quan nhanh cho panel phụ
 $totalProducts = (int) $conn->query("SELECT COUNT(*) FROM products")->fetchColumn();
@@ -621,4 +621,4 @@ document.getElementById('groupBySelect').addEventListener('change', function() {
 renderChart('week', 'revenue');
 </script>
 
-<?php require_once __DIR__ . '/admin_footer.php'; ?>
+<?php require_once __DIR__ . '/../../resources/views/admin/footer.php'; ?>

@@ -5,7 +5,6 @@ if (PHP_SAPI !== 'cli') {
 }
 
 require_once __DIR__ . '/../../includes/db.php';
-require_once __DIR__ . '/../../includes/order_service.php';
 
 $productId = 1;
 $original = $conn->prepare('SELECT stock, is_active FROM products WHERE id = ?');
@@ -33,7 +32,7 @@ for ($worker = 1; $worker <= 2; $worker++) {
         $conn = new PDO($childDsn, $childConfiguration['user'], $childConfiguration['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $output = ['worker' => $worker, 'success' => false];
         try {
-            $id = createOrder($conn, 1, [
+            $id = \App\Services\OrderService::createOrder($conn, 1, [
                 'fullname' => 'Phase3 Worker ' . $worker,
                 'email' => 'phase3-worker-' . $worker . '@example.com',
                 'phone' => '0900000000',

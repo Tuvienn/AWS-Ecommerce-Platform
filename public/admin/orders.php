@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . '/../../includes/db.php';
 require_once __DIR__ . '/../../includes/functions.php';
-require_once __DIR__ . '/../../includes/order_service.php';
 
 if (!isAdmin()) {
     redirectTo('/login.php');
@@ -13,9 +12,9 @@ if (isset($_POST['update_status'])) {
     $orderId = (int)$_POST['order_id'];
     $status = $_POST['status'];
     try {
-        updateOrderStatus($conn, $orderId, $status);
+        \App\Services\OrderService::updateOrderStatus($conn, $orderId, $status);
         setFlash('success', 'Cập nhật trạng thái đơn hàng #' . $orderId . ' thành công');
-    } catch (OrderServiceException $exception) {
+    } catch (\App\Services\OrderServiceException $exception) {
         setFlash('error', $exception->getUserMessage());
     }
     redirectTo('/admin/orders.php');
@@ -48,7 +47,7 @@ $statusMap = [
     'cancelled' => ['Đã hủy', 'badge-cancelled'],
 ];
 
-require_once __DIR__ . '/admin_header.php';
+require_once __DIR__ . '/../../resources/views/admin/header.php';
 ?>
 
 <div class="admin-header">
@@ -162,4 +161,4 @@ require_once __DIR__ . '/admin_header.php';
     </tbody>
 </table>
 
-<?php require_once __DIR__ . '/admin_footer.php'; ?>
+<?php require_once __DIR__ . '/../../resources/views/admin/footer.php'; ?>

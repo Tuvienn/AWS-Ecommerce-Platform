@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../resources/views/layouts/header.php';
 
 // Lọc theo danh mục
 $categoryId = isset($_GET['category']) ? (int)$_GET['category'] : 0;
@@ -155,4 +155,4 @@ if ($categoryId > 0) {
     <?php endif; ?>
 <?php endif; ?>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../resources/views/layouts/footer.php'; ?>

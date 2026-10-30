@@ -17,6 +17,12 @@ if ($appConfiguration['environment'] === 'production') {
 
     if ($missingVariables) {
         error_log('Thiếu biến môi trường database bắt buộc: ' . implode(', ', $missingVariables));
+
+        if (PHP_SAPI === 'cli') {
+            fwrite(STDERR, 'Thiếu biến môi trường database bắt buộc: ' . implode(', ', $missingVariables) . PHP_EOL);
+            exit(1);
+        }
+
         http_response_code(500);
         exit('Hệ thống đang tạm thời không khả dụng. Vui lòng thử lại sau.');
     }
@@ -40,6 +46,12 @@ try {
     $conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     error_log('Kết nối database thất bại: ' . $e->getMessage());
+
+    if (PHP_SAPI === 'cli') {
+        fwrite(STDERR, 'Kết nối database thất bại: ' . $e->getMessage() . PHP_EOL);
+        exit(1);
+    }
+
     http_response_code(500);
 
     if ($appConfiguration['debug']) {

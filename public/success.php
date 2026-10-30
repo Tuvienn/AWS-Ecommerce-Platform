@@ -21,7 +21,7 @@ if (!$order) {
     redirectTo('/account.php#orders');
 }
 
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../resources/views/layouts/header.php';
 ?>
 
 <!-- Nội dung trang phía sau (bị mờ) -->
@@ -260,4 +260,4 @@ body {
 }
 </style>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../resources/views/layouts/footer.php'; ?>

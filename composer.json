@@ -1,5 +1,18 @@
 {
+    "name": "tuvien/aws-ecommerce-platform",
+    "description": "PHP e-commerce application prepared for deployment on AWS.",
+    "type": "project",
+    "license": "proprietary",
     "require": {
+        "php": ">=8.2",
         "aws/aws-sdk-php": "^3.402"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        },
+        "classmap": [
+            "app/Storage/"
+        ]
     }
 }

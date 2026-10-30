@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../includes/db.php';
 require_once __DIR__ . '/../../includes/functions.php';
 
+$productRepository = new \App\Repositories\ProductRepository($conn);
 header('Content-Type: application/json');
 
 requirePostRequest(true);
@@ -25,9 +26,7 @@ switch ($action) {
             securityFailureResponse(400, 'Số lượng phải từ 1 đến 99.', true);
         }
         // Kiểm tra sản phẩm tồn tại
-        $stmt = $conn->prepare("SELECT id, stock FROM products WHERE id = ? AND is_active = 1");
-        $stmt->execute([$productId]);
-        $product = $stmt->fetch();
+        $product = $productRepository->findActiveStock($productId);
 
         if (!$product || (int) $product['stock'] <= 0) {
             securityFailureResponse(400, 'Sản phẩm không tồn tại hoặc đã hết hàng.', true);
@@ -55,11 +54,9 @@ switch ($action) {
         if ($quantity === null) {
             securityFailureResponse(400, 'Số lượng phải từ 1 đến 99.', true);
         }
-        $stmt = $conn->prepare("SELECT stock, is_active FROM products WHERE id = ?");
-        $stmt->execute([$productId]);
-        $product = $stmt->fetch();
+        $product = $productRepository->findStockState($productId);
         $stock = $product['stock'] ?? false;
-        if ($product === false || (int) $product['is_active'] !== 1 || $quantity > min(99, (int) $stock)) {
+        if ($product === null || (int) $product['is_active'] !== 1 || $quantity > min(99, (int) $stock)) {
             securityFailureResponse(400, 'Số lượng vượt quá tồn kho cho phép.', true);
         }
         if (isset($_SESSION['cart'][$productId])) {

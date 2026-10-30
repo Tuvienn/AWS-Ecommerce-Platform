@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../resources/views/layouts/header.php';
 
 // Lấy banner từ database
 $banners = $conn->query("SELECT * FROM banners WHERE is_active = 1 ORDER BY sort_order ASC, id ASC")->fetchAll();
@@ -185,7 +185,7 @@ $brands = $conn->query("SELECT b.id, b.name as brand, b.icon, COUNT(p.id) as tot
     </div>
 </div>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../resources/views/layouts/footer.php'; ?>
 <script>
 (function() {
     var slides = document.getElementById('heroSlides');

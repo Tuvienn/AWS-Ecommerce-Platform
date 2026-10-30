@@ -90,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !in_array($_POST['action'] ?? '', [
 // Lấy danh sách banner
 $banners = $conn->query("SELECT * FROM banners ORDER BY sort_order ASC, id ASC")->fetchAll();
 
-require_once __DIR__ . '/admin_header.php';
+require_once __DIR__ . '/../../resources/views/admin/header.php';
 ?>
 
 <div class="admin-header">
@@ -224,4 +224,4 @@ require_once __DIR__ . '/admin_header.php';
 
 </div>
 
-<?php require_once __DIR__ . '/admin_footer.php'; ?>
+<?php require_once __DIR__ . '/../../resources/views/admin/footer.php'; ?>

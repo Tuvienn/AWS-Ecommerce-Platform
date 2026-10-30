@@ -1,8 +1,8 @@
 <?php
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../includes/order_service.php';
 
+$productRepository = new \App\Repositories\ProductRepository($conn);
 $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
 
 if (!isLoggedIn()) {
@@ -16,10 +16,7 @@ if (empty($cart)) {
 
 // Lấy thông tin sản phẩm trong giỏ
 $ids = array_keys($cart);
-$placeholders = implode(',', array_fill(0, count($ids), '?'));
-$stmt = $conn->prepare("SELECT * FROM products WHERE id IN ($placeholders)");
-$stmt->execute($ids);
-$cartProducts = $stmt->fetchAll();
+$cartProducts = $productRepository->findByIds($ids);
 
 $total = 0;
 foreach ($cartProducts as $p) {
@@ -54,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         try {
             $userId = isLoggedIn() ? $_SESSION['user_id'] : null;
-            $orderId = createOrder($conn, $userId, [
+            $orderId = \App\Services\OrderService::createOrder($conn, $userId, [
                 'fullname' => $fullname,
                 'email' => $email,
                 'phone' => $phone,
@@ -66,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Xóa giỏ hàng
             unset($_SESSION['cart']);
             redirectTo('/success.php?order_id=' . $orderId);
-        } catch (OrderServiceException $e) {
+        } catch (\App\Services\OrderServiceException $e) {
             $errors[] = $e->getUserMessage();
         }
     }
@@ -93,7 +90,7 @@ if (isLoggedIn()) {
     }
 }
 
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../resources/views/layouts/header.php';
 ?>
 
 <div class="breadcrumb">
@@ -192,4 +189,4 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 </div>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../resources/views/layouts/footer.php'; ?>

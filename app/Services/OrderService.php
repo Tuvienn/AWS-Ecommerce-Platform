@@ -1,26 +1,17 @@
 <?php
 
-class OrderServiceException extends RuntimeException
+namespace App\Services;
+
+use PDO;
+use Throwable;
+
+final class OrderService
 {
-    private string $userMessage;
-
-    public function __construct(string $userMessage, string $technicalMessage = '')
-    {
-        parent::__construct($technicalMessage !== '' ? $technicalMessage : $userMessage);
-        $this->userMessage = $userMessage;
-    }
-
-    public function getUserMessage(): string
-    {
-        return $this->userMessage;
-    }
-}
-
 /**
  * Tạo đơn hàng bằng snapshot dữ liệu authoritative trong một transaction.
  * Cart có dạng [product_id => ['quantity' => số lượng]].
  */
-function createOrder(PDO $connection, ?int $userId, array $customer, array $cart): int
+public static function createOrder(PDO $connection, ?int $userId, array $customer, array $cart): int
 {
     if ($cart === []) {
         throw new OrderServiceException('Giỏ hàng đang trống.');
@@ -116,7 +107,7 @@ function createOrder(PDO $connection, ?int $userId, array $customer, array $cart
     }
 }
 
-function updateOrderStatus(PDO $connection, int $orderId, string $targetStatus): void
+public static function updateOrderStatus(PDO $connection, int $orderId, string $targetStatus): void
 {
     $transitions = [
         'pending' => ['confirmed', 'cancelled'],
@@ -170,5 +161,6 @@ function updateOrderStatus(PDO $connection, int $orderId, string $targetStatus):
         error_log('Cập nhật trạng thái đơn hàng thất bại: ' . $exception->getMessage());
         throw new OrderServiceException('Không thể cập nhật trạng thái đơn hàng.', $exception->getMessage());
     }
+}
 }
 
