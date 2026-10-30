@@ -4,6 +4,11 @@ if (!defined('PROJECT_ROOT')) {
     define('PROJECT_ROOT', dirname(__DIR__));
 }
 
+$composerAutoload = PROJECT_ROOT . '/vendor/autoload.php';
+if (is_file($composerAutoload)) {
+    require_once $composerAutoload;
+}
+
 if (!isset($GLOBALS['project_config'])) {
     $GLOBALS['project_config'] = [
         'app' => require PROJECT_ROOT . '/config/app.php',
