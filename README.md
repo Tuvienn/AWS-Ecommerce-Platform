@@ -190,6 +190,13 @@ Catalog repair, image import, image health check, folder refactor và local
 regression đã hoàn tất. Bước tiếp theo là xác nhận RDS/S3 private, cài
 dependency production bằng Composer và deploy ứng dụng lên AWS.
 
+## 🤝 Làm việc nhóm
+
+Trước khi đóng góp, đọc [CONTRIBUTING.md](CONTRIBUTING.md),
+[quy trình nhóm](docs/team/TEAM_WORKFLOW.md) và
+[phân công nhiệm vụ](docs/team/TASK_ASSIGNMENT.md). Mọi thay đổi phải đi qua
+branch riêng và Pull Request; không push trực tiếp vào `main`.
+
 <div align="center">
 
 ⭐ Build carefully — Test honestly — Deploy securely ⭐

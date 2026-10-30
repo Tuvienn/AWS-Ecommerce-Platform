@@ -1,0 +1,9 @@
+# Owner mặc định và các khu vực nhạy cảm.
+* @Tuvienn
+
+/deploy/ @Tuvienn
+/config/ @Tuvienn
+/.github/ @Tuvienn
+/composer.json @Tuvienn
+/composer.lock @Tuvienn
+/database/migrations/ @Tuvienn
