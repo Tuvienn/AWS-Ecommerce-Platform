@@ -88,7 +88,8 @@ tests/
 ├── feature/          Feature test space
 └── manual/           Manual/debug tests
 uploads/              Legacy upload data
-images/               Source image gốc
+resources/images/
+└── catalog-source/   Ảnh nguồn sản phẩm và banner
 composer.json         Dependency contract
 composer.lock         Dependency versions lock
 ```
@@ -148,7 +149,14 @@ toàn bộ product image phải `valid`, không có `missing` hoặc `invalid`.
 
 ## 🖼️ Product image
 
-Ảnh gốc được giữ trong `images/`. Ảnh runtime được import vào:
+Ảnh gốc được phân loại trong:
+
+```text
+resources/images/catalog-source/products/
+resources/images/catalog-source/banners/
+```
+
+Ảnh runtime được import vào:
 
 ```text
 storage/uploads/products/YYYY/MM/

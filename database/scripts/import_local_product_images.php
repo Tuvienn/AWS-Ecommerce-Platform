@@ -9,7 +9,7 @@ require_once dirname(__DIR__, 2) . '/includes/db.php';
 require_once dirname(__DIR__, 2) . '/includes/functions.php';
 
 $apply = in_array('--apply', $argv, true);
-$sourceRoot = dirname(__DIR__, 2) . '/images';
+$sourceRoot = dirname(__DIR__, 2) . '/resources/images/catalog-source/products';
 $mapping = [
     1 => '1777637811_iphone.jpg',
     2 => '1777637830_samsung.jpg',
