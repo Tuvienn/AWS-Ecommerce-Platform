@@ -169,13 +169,14 @@ Database lưu storage key, không lưu đường dẫn tuyệt đối. Một s�
 
 | Hạng mục | Trạng thái |
 |---|---|
-| EC2 | Đã tạo tại `ap-southeast-1`, instance `t3.micro` |
-| EC2 Security Group | HTTP/HTTPS public, không mở MySQL public |
-| SSM role | Đã gắn cho EC2 |
-| Local regression/readiness | PASS khi MySQL và runtime directories sẵn sàng |
-| RDS MySQL | Chưa tạo |
-| S3 adapter trong source | Đã tích hợp |
-| S3 private bucket production | Cần xác nhận bucket, IAM và migration dữ liệu |
+| EC2 | Đã deploy tại `ap-southeast-1` trên instance `t3.micro` |
+| Network security | Cho phép web traffic; MySQL không mở public |
+| IAM/SSM | EC2 role và quản trị qua SSM đã cấu hình |
+| RDS MySQL | Đã kết nối, private và mã hóa dữ liệu |
+| S3 | Private bucket đã tích hợp ảnh runtime, bật Block Public Access và encryption |
+| CloudWatch | Đã thu thập Apache/application log và tạo alarm EC2 cơ bản |
+| Regression/readiness | PASS trên môi trường kiểm tra hiện tại |
+| HTTPS | Chưa triển khai, đang sử dụng HTTP trong giai đoạn thử nghiệm |
 
 ## 🔐 Nguyên tắc bảo mật
 
@@ -189,14 +190,16 @@ Database lưu storage key, không lưu đường dẫn tuyệt đối. Một s�
 
 - UI chưa redesign hoàn chỉnh.
 - Một số product image là mapping tạm thời cho demo.
-- RDS và S3 production chưa provision xong.
+- RDS đang phục vụ giai đoạn thử nghiệm với backup retention 1 ngày và chưa bật deletion protection.
+- HTTPS chưa được cấu hình.
 - Chưa tích hợp payment gateway thật.
 
 ## 📌 Trạng thái project
 
-Catalog repair, image import, image health check, folder refactor và local
-regression đã hoàn tất. Bước tiếp theo là xác nhận RDS/S3 private, cài
-dependency production bằng Composer và deploy ứng dụng lên AWS.
+Catalog repair, image import, image health check, folder refactor, AWS storage,
+database và monitoring cơ bản đã hoàn tất. Ứng dụng hiện đã deploy thử nghiệm
+trên AWS. Các bước tiếp theo là phát triển theo phân công nhóm, bổ sung
+unit/feature test, chạy acceptance test và hoàn thiện HTTPS khi chuẩn bị bản cuối.
 
 <div align="center">
 
