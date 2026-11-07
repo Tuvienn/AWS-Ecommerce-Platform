@@ -64,6 +64,22 @@ CREATE TABLE products (
     INDEX idx_products_active_catalog (is_active, category_id, brand_id)
 ) ENGINE=InnoDB;
 
+-- Bảng gallery ảnh sản phẩm
+-- Mỗi product có 1-10 ảnh; validation số lượng và ảnh chính do application xử lý.
+CREATE TABLE product_images (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    image_key VARCHAR(255) NOT NULL,
+    is_primary TINYINT(1) NOT NULL DEFAULT 0,
+    sort_order SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_product_images_product
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    CONSTRAINT uq_product_images_product_key UNIQUE (product_id, image_key),
+    INDEX idx_product_images_product_sort (product_id, sort_order, id),
+    INDEX idx_product_images_primary (product_id, is_primary)
+) ENGINE=InnoDB;
+
 -- Bảng đơn hàng
 CREATE TABLE orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -112,7 +128,8 @@ INSERT INTO categories (name, icon) VALUES
 ('Máy tính bảng', 'fa-tablet-screen-button'),
 ('Phụ kiện', 'fa-headphones'),
 ('Đồng hồ thông minh', 'fa-clock'),
-('Âm thanh', 'fa-volume-high');
+('Âm thanh', 'fa-volume-high'),
+('Màn hình', 'fa-desktop');
 
 -- Nhãn hàng mẫu
 INSERT INTO brands (name, icon) VALUES
