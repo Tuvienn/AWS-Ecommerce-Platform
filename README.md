@@ -1,212 +1,135 @@
-<div align="center">
+# AWS E-Commerce Platform - Nền Tảng Thương Mại Điện Tử Thiết Bị Công Nghệ
 
-# 🛒 AWS ECOMMERCE PLATFORM
+Hệ thống thương mại điện tử chuyên nghiệp cung cấp điện thoại, máy tính bảng, laptop và phụ kiện công nghệ cao cấp. Dự án được xây dựng theo kiến trúc **Modular Monolith** kết hợp **Layered Architecture (Controller -> Service -> Repository)** trên nền tảng **Laravel 13**, cơ sở dữ liệu **MySQL 8**, và môi trường container hóa **Docker**.
 
-<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=24&duration=2800&pause=900&color=FF9900&center=true&vCenter=true&width=900&lines=Build+%E2%86%92+Test+%E2%86%92+Secure+%E2%86%92+Deploy;PHP+E-Commerce+on+AWS;EC2+%7C+RDS+%7C+S3+%7C+IAM" alt="Typing SVG" />
+---
 
-<br/>
+## 🏗️ 1. Kiến Trúc Hệ Thống (Architecture Overview)
 
-<img src="https://skillicons.dev/icons?i=php,mysql,html,css,js,aws,git,github,vscode" alt="Technology Icons" />
-
-<br/><br/>
-
-Website thương mại điện tử PHP được xây dựng theo hướng triển khai cloud trên AWS.
-
-</div>
-
-## 📖 Giới thiệu project
-
-`aws-ecommerce-platform` là hệ thống bán hàng trực tuyến gồm giao diện khách
-hàng, trang quản trị, database MySQL và storage cho product image/runtime upload.
-
-Project tập trung vào:
-
-- 🛍️ Luồng mua hàng: sản phẩm → chi tiết → giỏ hàng → checkout.
-- 🧑‍💼 Admin: quản lý sản phẩm, danh mục, thương hiệu, banner và đơn hàng.
-- 🖼️ Product image được validate và lưu qua storage abstraction.
-- 🔐 Cấu hình portable, security hardening và HTTP/AJAX protection.
-- ☁️ Chuẩn bị kiến trúc AWS gồm EC2, RDS, S3, IAM và SSM.
-- 🧩 Cấu trúc module hóa với bootstrap, services, repositories, views và routes.
-
-## 🎯 Mục tiêu
-
-<table>
-  <tr>
-    <td align="center" width="25%"><h3>🏗️ Build</h3>Xây dựng website PHP có frontend và admin workflow.</td>
-    <td align="center" width="25%"><h3>🔒 Secure</h3>Bảo vệ session, CSRF, upload và database access.</td>
-    <td align="center" width="25%"><h3>🧪 Test</h3>Kiểm tra asset, route, storage và regression.</td>
-    <td align="center" width="25%"><h3>☁️ Deploy</h3>Đưa ứng dụng lên hạ tầng AWS có kiểm soát.</td>
-  </tr>
-</table>
-
-## ✨ Tính năng chính
-
-| Khu vực | Chức năng |
-|---|---|
-| 👤 Customer | Đăng ký, đăng nhập, tài khoản, xem sản phẩm, tìm kiếm, lọc, giỏ hàng, checkout |
-| 🧑‍💼 Admin | CRUD sản phẩm, danh mục, brand, banner và quản lý đơn hàng |
-| 🖼️ Images | Validate MIME/kích thước, storage key, local runtime storage và image gateway |
-| 🔐 Security | Session protection, CSRF, input validation, upload validation và access guard |
-| 🧪 Quality | PHP lint, catalog health check, HTTP smoke test và regression test |
-
-## 🧱 Kiến trúc hệ thống
-
-```mermaid
-flowchart LR
-    U[👤 Browser] --> P[🌐 PHP Application<br/>DocumentRoot: public/]
-    P --> D[(🗄️ MySQL / RDS)]
-    P --> S[(🪣 Local Storage / S3)]
-    A[🧑‍💼 Admin] --> P
-    P --> L[📊 Logs / CloudWatch]
+```
+┌────────────────────────────────────────────────────────┐
+│                   MPA Frontend (Blade)                 │
+│      Vanilla JS ES6+ Client Services + Bootstrap 5     │
+└───────────────────────────┬────────────────────────────┘
+                            │ REST API (JSON) + Cookie XSRF
+┌───────────────────────────▼────────────────────────────┐
+│                    API Layer / Routing                 │
+│         CheckPermission & EnsureUserActive Middleware  │
+└───────────────────────────┬────────────────────────────┘
+                            │
+┌───────────────────────────▼────────────────────────────┐
+│                 Modular Monolith (Domain)              │
+│   ├── Identity (Sanctum SPA Session, RBAC 8 quyền)     │
+│   ├── Catalog  (Sản phẩm, danh mục, biến thể, kho)     │
+│   ├── Cart     (Giỏ hàng Guest/Auth, đồng bộ tự động)  │
+│   ├── Order    (Đặt hàng, mã đơn, hủy đơn, tồn kho)   │
+│   └── Payment  (COD, sẵn sàng tích hợp VietQR/manual)  │
+└───────────────────────────┬────────────────────────────┘
+                            │ Controller -> Service -> Repository
+┌───────────────────────────▼────────────────────────────┐
+│              Database Access Layer (DB::table)         │
+│              MySQL 8 (16 bảng chuẩn hóa)               │
+└────────────────────────────────────────────────────────┘
 ```
 
-Mục tiêu production là EC2 public subnet chạy PHP, RDS MySQL private subnet và
-S3 private bucket cho runtime upload.
+### Điểm nổi bật về thiết kế:
+1. **Modular Monolith**: Mỗi domain nghiệp vụ là một module độc lập trong thư mục `app/Modules/`, bao gồm Controllers, Services, Repositories, và Form Requests riêng biệt.
+2. **Layered Architecture**: Tuân thủ mô hình Controller -> Service -> Repository. Mọi truy vấn cơ sở dữ liệu được thực hiện qua **Laravel Query Builder (`DB::table`)** trong Repository, tương thích với MySQL/RDS MySQL.
+3. **Frontend MPA + REST API**: Giao diện người dùng sử dụng Blade Views render khung sườn, toàn bộ dữ liệu động được nạp và tương tác qua 41 REST APIs bằng Vanilla JS hiện đại, loại bỏ sự phụ thuộc vào các build tool nặng nề.
 
-## 🗂️ Cấu trúc thư mục
+---
 
-```text
-app/
-├── Repositories/     Truy vấn dữ liệu dùng lại
-├── Services/         Nghiệp vụ checkout và order
-└── Storage/          Local/S3 storage adapter
-bootstrap/            Bootstrap ứng dụng và autoload chuyển tiếp
-config/               App, database, logging và storage configuration
-database/
-├── migrations/       Versioned SQL migrations
-└── scripts/          Health check, import, repair và migration runtime
-deploy/aws/           Preflight, readiness và application deploy script
-docs/                 Project rules, plans và testing evidence
-includes/             Compatibility layer, security, helpers và DB access
-public/               DocumentRoot, entrypoint PHP, admin và AJAX
-resources/views/      Public/admin layouts và view template
-routes/               Web, admin và AJAX route registry
-storage/              Runtime logs và uploaded objects
-tests/
-├── unit/             Unit test space
-├── integration/      Database/storage regression
-├── feature/          Feature test space
-└── manual/           Manual/debug tests
-uploads/              Legacy upload data
-resources/images/
-└── catalog-source/   Ảnh nguồn sản phẩm và banner
-composer.json         Dependency contract
-composer.lock         Dependency versions lock
-```
+## 📊 2. Cấu Trúc Cơ Sở Dữ Liệu (16 Bảng MySQL)
 
-## 🛠️ Công nghệ & công cụ
+1. **Phân quyền & Tài khoản (Identity)**:
+   - `roles`: Danh mục vai trò (`admin`, `customer`).
+   - `permissions`: 16 quyền hạn hệ thống theo chuẩn `module.action`.
+   - `role_permissions`: Bảng liên kết n-n giữa vai trò và quyền hạn.
+   - `users`: Thông tin người dùng, mật khẩu hash, trạng thái (`Active`, `Suspended`).
+2. **Danh mục & Sản phẩm (Catalog)**:
+   - `categories`: Danh mục sản phẩm đa cấp kèm slug.
+   - `products`: Sản phẩm chính kèm mô tả, bảo hành, trạng thái (`Active`, `Draft`, `Archived`).
+   - `product_variants`: Biến thể SKU, màu sắc, dung lượng, giá bán, giá niêm yết.
+   - `product_images`: Hình ảnh sản phẩm (ảnh chính, ảnh gallery).
+   - `product_specs`: Thông số kỹ thuật chi tiết dạng Key-Value hoặc JSON.
+3. **Kho hàng (Inventory)**:
+   - `inventory`: Số lượng tồn kho và ngưỡng cảnh báo tối thiểu theo từng biến thể.
+   - `inventory_transactions`: Lịch sử nhập, xuất, giữ chỗ và hoàn kho.
+4. **Giỏ hàng (Cart)**:
+   - `carts`: Giỏ hàng phiên làm việc (Guest qua `session_id`, User qua `user_id`).
+   - `cart_items`: Các mặt hàng biến thể trong giỏ.
+5. **Đơn hàng & Thanh toán (Order & Payment)**:
+   - `orders`: Thông tin đơn hàng, mã đơn `TS-YYYYMMDD-XXXXX`, trạng thái giao dịch.
+   - `order_items`: Chi tiết các sản phẩm trong đơn tại thời điểm mua.
+   - `payments`: Giao dịch thanh toán COD / VietQR.
 
-| Nhóm | Công nghệ |
-|---|---|
-| Backend | PHP 8.2+, PDO |
-| Database | MySQL/MariaDB |
-| Frontend | HTML, CSS, JavaScript |
-| Runtime | Apache hoặc PHP built-in server |
-| AWS target | EC2, RDS MySQL, S3, IAM, SSM, CloudWatch |
-| Development | Git, GitHub, VS Code |
+---
 
-## 🔄 Quy trình chạy project
+## 🚀 3. Hướng Dẫn Cài Đặt & Chạy Hệ Thống
 
-```mermaid
-flowchart LR
-    A[📥 Source code] --> B[⚙️ Configure .env]
-    B --> C[🗄️ MySQL schema/data]
-    C --> D[🧪 Health check]
-    D --> E[🌐 Run public/]
-    E --> F[✅ Smoke & regression]
-    F --> G[☁️ AWS readiness]
-```
+### Yêu cầu tiên quyết:
+- Docker Desktop (hỗ trợ WSL2 hoặc Linux container).
+- Git.
 
-## ⚙️ Chạy local
+### Các bước khởi chạy với Docker:
 
-Yêu cầu PHP có `pdo_mysql`, `fileinfo`, `curl`, `mbstring` và MySQL đang chạy.
+1. **Khởi động các container**:
+   ```bash
+   cd aws-ecommerce-platform-laravel
+   docker compose up -d
+   ```
+   Hệ thống gồm 2 container:
+   - `mysql`: MySQL 8.4 (host port mặc định `3307`).
+   - `app`: PHP 8.3 + Laravel (host port mặc định `8000`).
 
-```bash
-cp .env.example .env
-set -a
-source .env
-set +a
+2. **Chạy Migration & Seeder (Tạo bảng và dữ liệu mẫu)**:
+   ```bash
+   docker compose exec app php artisan migrate
+   docker compose exec app php artisan db:seed --force
+   ```
 
-composer install
-php -S 127.0.0.1:8000 -t public
-```
+3. **Truy cập ứng dụng**:
+   - Cửa hàng (Storefront): [http://localhost:8000](http://localhost:8000)
+   - Trang quản trị (Admin): [http://localhost:8000/admin](http://localhost:8000/admin)
 
-Mở: `http://127.0.0.1:8000`
+---
 
-## 🧪 Kiểm thử & kiểm tra
+## 🔑 4. Tài Khoản Trải Nghiệm Mẫu (Demo Credentials)
 
-```bash
-php database/scripts/check_catalog_assets.php
-bash deploy/aws/application_readiness.sh
-tests/run_regression.sh
-```
+| Vai trò | Email đăng nhập | Mật khẩu | Quyền hạn |
+| :--- | :--- | :--- | :--- |
+| **Quản trị viên (Admin)** | `admin@techshop.vn` | `admin123` | Toàn quyền quản trị hệ thống (8 permissions) |
+| **Khách hàng mẫu (Customer)** | `customer@example.com` | `customer123` | Mua sắm, quản lý giỏ hàng, xem đơn hàng cá nhân |
 
-Các lệnh cũ trong `database/` vẫn được giữ compatibility wrapper; script chuẩn
-nằm trong `database/scripts/`.
+---
 
-Catalog hiện có 17 sản phẩm, 6 danh mục và 10 thương hiệu. Health check yêu cầu
-toàn bộ product image phải `valid`, không có `missing` hoặc `invalid`.
+## 🌐 5. Danh Sách Tuyến Đường Web & Giao Diện (17 MPA Views)
 
-## 🖼️ Product image
+### Giao diện Khách hàng (Customer Storefront)
+- `/`: Trang chủ TechShop (Banner, Danh mục nổi bật, Sản phẩm bán chạy, Hàng mới về).
+- `/products`: Danh sách sản phẩm kèm bộ lọc đa năng (danh mục, mức giá, sắp xếp, tìm kiếm từ khóa `q`).
+- `/products/{slug}`: Chi tiết sản phẩm, chọn biến thể màu sắc/dung lượng, thông số kỹ thuật, thêm giỏ hàng.
+- `/cart`: Giỏ hàng trực quan, kiểm tra tình trạng tồn kho, tăng giảm số lượng.
+- `/checkout`: Trang đặt hàng, hiện có COD; VietQR/manual sẽ được bổ sung trước khi phát hành.
+- `/orders/return`: Tuyến dự kiến dành cho kết quả thanh toán trực tuyến.
+- `/orders/{orderNumber}`: Tra cứu trạng thái đơn hàng và lịch sử thanh toán.
+- `/login`: Đăng nhập tài khoản.
+- `/register`: Đăng ký tài khoản khách hàng mới.
+- `/account`: Hồ sơ cá nhân, đổi mật khẩu và danh sách đơn mua.
 
-Ảnh gốc được phân loại trong:
+### Giao diện Quản trị (Admin Dashboard)
+- `/admin`: Bảng điều khiển thống kê tổng quan doanh thu, đơn hàng, khách hàng, sản phẩm.
+- `/admin/categories`: Quản lý danh mục sản phẩm (thêm, sửa, xóa, bật/tắt).
+- `/admin/products`: Quản lý danh sách sản phẩm, biến thể và thư viện hình ảnh.
+- `/admin/inventory`: Theo dõi tồn kho thực tế và cập nhật số lượng nhập kho.
+- `/admin/orders`: Quản lý danh sách đơn hàng, xem chi tiết và chuyển đổi trạng thái đơn.
+- `/admin/payments`: Lịch sử giao dịch thanh toán.
+- `/admin/users`: Quản lý danh sách người dùng, vai trò và trạng thái tài khoản.
 
-```text
-resources/images/catalog-source/products/
-resources/images/catalog-source/banners/
-```
+---
 
-Ảnh runtime được import vào:
-
-```text
-storage/uploads/products/YYYY/MM/
-```
-
-Database lưu storage key, không lưu đường dẫn tuyệt đối. Một số mapping demo đã
-được xác nhận: OPPO dùng ảnh Vivo; Dell và ThinkPad dùng chung ảnh laptop.
-
-## ☁️ Trạng thái AWS
-
-| Hạng mục | Trạng thái |
-|---|---|
-| EC2 | Đã deploy tại `ap-southeast-1` trên instance `t3.micro` |
-| Network security | Cho phép web traffic; MySQL không mở public |
-| IAM/SSM | EC2 role và quản trị qua SSM đã cấu hình |
-| RDS MySQL | Đã kết nối, private và mã hóa dữ liệu |
-| S3 | Private bucket đã tích hợp ảnh runtime, bật Block Public Access và encryption |
-| CloudWatch | Đã thu thập Apache/application log và tạo alarm EC2 cơ bản |
-| Regression/readiness | PASS trên môi trường kiểm tra hiện tại |
-| HTTPS | Chưa triển khai, đang sử dụng HTTP trong giai đoạn thử nghiệm |
-
-## 🔐 Nguyên tắc bảo mật
-
-- Không commit `.env`, AWS credentials hoặc database password.
-- RDS phải private và không mở port `3306` tới Internet.
-- S3 bật Block Public Access và encryption.
-- EC2 ưu tiên quản trị bằng SSM thay vì SSH public.
-- Upload phải kiểm tra MIME, kích thước và nội dung thực tế.
-
-## ⚠️ Giới hạn hiện tại
-
-- UI chưa redesign hoàn chỉnh.
-- Một số product image là mapping tạm thời cho demo.
-- RDS đang phục vụ giai đoạn thử nghiệm với backup retention 1 ngày và chưa bật deletion protection.
-- HTTPS chưa được cấu hình.
-- Chưa tích hợp payment gateway thật.
-
-## 📌 Trạng thái project
-
-Catalog repair, image import, image health check, folder refactor, AWS storage,
-database và monitoring cơ bản đã hoàn tất. Ứng dụng hiện đã deploy thử nghiệm
-trên AWS. Các bước tiếp theo là phát triển theo phân công nhóm, bổ sung
-unit/feature test, chạy acceptance test và hoàn thiện HTTPS khi chuẩn bị bản cuối.
-
-<div align="center">
-
-⭐ Build carefully — Test honestly — Deploy securely ⭐
-
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=120&section=footer" width="100%" alt="Footer Wave" />
-
-© 2026 AWS Ecommerce Platform
-
-</div>
+## ⚡ 6. Tối Ưu Hóa Hiệu Năng V1 (Performance Enhancements)
+- **PHP OPcache (256MB)**: Tự động kích hoạt thông qua `docker-entrypoint.sh` và `opcache-recommended.ini`, tăng tốc độ đọc file trên Windows bind-mount lên gấp 10-15 lần.
+- **PHP CLI Multi-workers**: Cấu hình `PHP_CLI_SERVER_WORKERS=8` xử lý đồng thời các request API và static assets.
+- **Frontend Promise Deduplication**: `CatalogService` tự động lưu trữ và chia sẻ promise request, ngăn chặn gọi lặp API danh mục trên cùng một lượt tải trang.
+- **Asynchronous Initialization**: Giao diện khởi tạo các thành phần Header, Cart Badge và Session thông qua `Promise.allSettled`.

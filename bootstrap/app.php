@@ -1,53 +1,145 @@
 <?php
 
-if (!defined('PROJECT_ROOT')) {
-    define('PROJECT_ROOT', dirname(__DIR__));
-}
+use App\Shared\Exceptions\BusinessException;
+use App\Shared\Helpers\ApiResponse;
+use App\Shared\Middleware\CheckPermission;
+use App\Shared\Middleware\EnsureAdminWebAccess;
+use App\Shared\Middleware\EnsureUserActive;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-require_once __DIR__ . '/autoload.php';
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
+    )
+    ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->statefulApi();
 
-if (!isset($GLOBALS['project_config'])) {
-    $GLOBALS['project_config'] = [
-        'app' => require PROJECT_ROOT . '/config/app.php',
-        'database' => require PROJECT_ROOT . '/config/database.php',
-        'logging' => require PROJECT_ROOT . '/config/logging.php',
-        'storage' => require PROJECT_ROOT . '/config/storage.php',
-    ];
-}
+        $middleware->encryptCookies(except: [
+            'guest_cart_token',
+        ]);
 
-$appConfiguration = $GLOBALS['project_config']['app'];
-$loggingConfiguration = $GLOBALS['project_config']['logging'];
+        $middleware->api(append: [
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+        ]);
 
-date_default_timezone_set($appConfiguration['timezone']);
+        $middleware->alias([
+            'permission' => CheckPermission::class,
+            'active' => EnsureUserActive::class,
+            'admin.web' => EnsureAdminWebAccess::class,
+            'EnsureUserActive' => EnsureUserActive::class,
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->shouldRenderJsonWhen(
+            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
+        );
 
-ini_set('log_errors', '1');
-ini_set('error_log', $loggingConfiguration['path']);
+        $exceptions->render(function (BusinessException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return ApiResponse::error(
+                    $e->getErrorCode(),
+                    $e->getMessage(),
+                    $e->getHttpStatus(),
+                    $e->getDetails()
+                );
+            }
+        });
 
-if ($appConfiguration['debug']) {
-    ini_set('display_errors', '1');
-    error_reporting(E_ALL);
-} else {
-    ini_set('display_errors', '0');
-    error_reporting(E_ALL);
-}
+        $exceptions->render(function (HttpException $e, Request $request) {
+            if ($e->getStatusCode() === 419 && ($request->is('api/*') || $request->expectsJson())) {
+                return ApiResponse::error(
+                    'CSRF_TOKEN_MISMATCH',
+                    'Phiên bảo mật đã hết hạn. Vui lòng thử lại.',
+                    419
+                );
+            }
+        });
 
-if (session_status() === PHP_SESSION_NONE) {
-    $sessionCookiePath = $appConfiguration['base_path'] !== ''
-        ? $appConfiguration['base_path'] . '/'
-        : '/';
-    $applicationScheme = parse_url($appConfiguration['url'], PHP_URL_SCHEME);
-    $secureCookie = $appConfiguration['environment'] === 'production'
-        && strtolower((string) $applicationScheme) === 'https';
+        $exceptions->render(function (ValidationException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return ApiResponse::error(
+                    'VALIDATION_ERROR',
+                    $e->getMessage(),
+                    422,
+                    $e->errors()
+                );
+            }
+        });
 
-    ini_set('session.use_strict_mode', '1');
-    ini_set('session.use_only_cookies', '1');
-    session_set_cookie_params([
-        'lifetime' => 0,
-        'path' => $sessionCookiePath,
-        'secure' => $secureCookie,
-        'httponly' => true,
-        'samesite' => 'Lax',
-    ]);
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return ApiResponse::error(
+                    'UNAUTHENTICATED',
+                    'Unauthenticated',
+                    401
+                );
+            }
+        });
 
-    session_start();
-}
+        $exceptions->render(function (AuthorizationException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return ApiResponse::error(
+                    'PERMISSION_DENIED',
+                    'Permission denied',
+                    403
+                );
+            }
+        });
+
+        $exceptions->render(function (AccessDeniedHttpException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return ApiResponse::error(
+                    'PERMISSION_DENIED',
+                    'Permission denied',
+                    403
+                );
+            }
+        });
+
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return ApiResponse::error(
+                    'RESOURCE_NOT_FOUND',
+                    'Resource not found',
+                    404
+                );
+            }
+        });
+
+        $exceptions->render(function (ModelNotFoundException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return ApiResponse::error(
+                    'RESOURCE_NOT_FOUND',
+                    'Resource not found',
+                    404
+                );
+            }
+        });
+
+        $exceptions->render(function (\Throwable $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                $message = config('app.debug') ? $e->getMessage() : 'Internal server error';
+                $details = config('app.debug') ? ['file' => $e->getFile(), 'line' => $e->getLine()] : [];
+
+                return ApiResponse::error(
+                    'INTERNAL_ERROR',
+                    $message ?: 'Internal server error',
+                    500,
+                    $details
+                );
+            }
+        });
+    })->create();
