@@ -1,135 +1,147 @@
-# AWS E-Commerce Platform - Nền Tảng Thương Mại Điện Tử Thiết Bị Công Nghệ
+# TechShop AWS E Commerce Platform
 
-Hệ thống thương mại điện tử chuyên nghiệp cung cấp điện thoại, máy tính bảng, laptop và phụ kiện công nghệ cao cấp. Dự án được xây dựng theo kiến trúc **Modular Monolith** kết hợp **Layered Architecture (Controller -> Service -> Repository)** trên nền tảng **Laravel 13**, cơ sở dữ liệu **MySQL 8**, và môi trường container hóa **Docker**.
+TechShop là hệ thống thương mại điện tử thiết bị công nghệ được xây dựng cho môn Cloud Computing. Ứng dụng dùng Laravel, triển khai trên AWS và tập trung thể hiện luồng website, database, object storage, network security và monitoring.
 
----
+> Đây là source chính thức của project. Không đưa credentials, file `.env`, dữ liệu khách hàng hoặc AWS identifiers nhạy cảm vào repository.
 
-## 🏗️ 1. Kiến Trúc Hệ Thống (Architecture Overview)
+## Mục tiêu
 
-```
-┌────────────────────────────────────────────────────────┐
-│                   MPA Frontend (Blade)                 │
-│      Vanilla JS ES6+ Client Services + Bootstrap 5     │
-└───────────────────────────┬────────────────────────────┘
-                            │ REST API (JSON) + Cookie XSRF
-┌───────────────────────────▼────────────────────────────┐
-│                    API Layer / Routing                 │
-│         CheckPermission & EnsureUserActive Middleware  │
-└───────────────────────────┬────────────────────────────┘
-                            │
-┌───────────────────────────▼────────────────────────────┐
-│                 Modular Monolith (Domain)              │
-│   ├── Identity (Sanctum SPA Session, RBAC 8 quyền)     │
-│   ├── Catalog  (Sản phẩm, danh mục, biến thể, kho)     │
-│   ├── Cart     (Giỏ hàng Guest/Auth, đồng bộ tự động)  │
-│   ├── Order    (Đặt hàng, mã đơn, hủy đơn, tồn kho)   │
-│   └── Payment  (COD, sẵn sàng tích hợp VietQR/manual)  │
-└───────────────────────────┬────────────────────────────┘
-                            │ Controller -> Service -> Repository
-┌───────────────────────────▼────────────────────────────┐
-│              Database Access Layer (DB::table)         │
-│              MySQL 8 (16 bảng chuẩn hóa)               │
-└────────────────────────────────────────────────────────┘
+- Cung cấp storefront cho khách hàng: catalog, tìm kiếm, lọc, giỏ hàng, checkout, đơn hàng và tài khoản.
+- Cung cấp khu vực Admin để quản lý catalog, tồn kho, đơn hàng, thanh toán, voucher và người dùng.
+- Triển khai Laravel trên AWS bằng EC2, RDS MySQL, S3, VPC, IAM và CloudWatch.
+- Vận hành demo bằng DuckDNS và HTTPS với Apache cùng Let's Encrypt.
+
+## Kiến trúc
+
+```text
+Customer / Admin
+       |
+       | HTTPS
+       v
+DuckDNS + Apache on Amazon EC2
+       |
+       | Laravel 13 · Sanctum · REST APIs
+       +--------------------+---------------------+
+       |                    |                     |
+       v                    v                     v
+Amazon RDS MySQL       Amazon S3              CloudWatch
+private database       catalog images          logs and EC2 metrics
 ```
 
-### Điểm nổi bật về thiết kế:
-1. **Modular Monolith**: Mỗi domain nghiệp vụ là một module độc lập trong thư mục `app/Modules/`, bao gồm Controllers, Services, Repositories, và Form Requests riêng biệt.
-2. **Layered Architecture**: Tuân thủ mô hình Controller -> Service -> Repository. Mọi truy vấn cơ sở dữ liệu được thực hiện qua **Laravel Query Builder (`DB::table`)** trong Repository, tương thích với MySQL/RDS MySQL.
-3. **Frontend MPA + REST API**: Giao diện người dùng sử dụng Blade Views render khung sườn, toàn bộ dữ liệu động được nạp và tương tác qua 41 REST APIs bằng Vanilla JS hiện đại, loại bỏ sự phụ thuộc vào các build tool nặng nề.
+Application là một **Modular Monolith** theo hướng `Controller -> Service -> Repository`. Blade cung cấp layout/page shell; Vanilla JavaScript gọi REST APIs để nạp dữ liệu và xử lý tương tác.
 
----
+## Chức năng chính
 
-## 📊 2. Cấu Trúc Cơ Sở Dữ Liệu (16 Bảng MySQL)
+### Customer
 
-1. **Phân quyền & Tài khoản (Identity)**:
-   - `roles`: Danh mục vai trò (`admin`, `customer`).
-   - `permissions`: 16 quyền hạn hệ thống theo chuẩn `module.action`.
-   - `role_permissions`: Bảng liên kết n-n giữa vai trò và quyền hạn.
-   - `users`: Thông tin người dùng, mật khẩu hash, trạng thái (`Active`, `Suspended`).
-2. **Danh mục & Sản phẩm (Catalog)**:
-   - `categories`: Danh mục sản phẩm đa cấp kèm slug.
-   - `products`: Sản phẩm chính kèm mô tả, bảo hành, trạng thái (`Active`, `Draft`, `Archived`).
-   - `product_variants`: Biến thể SKU, màu sắc, dung lượng, giá bán, giá niêm yết.
-   - `product_images`: Hình ảnh sản phẩm (ảnh chính, ảnh gallery).
-   - `product_specs`: Thông số kỹ thuật chi tiết dạng Key-Value hoặc JSON.
-3. **Kho hàng (Inventory)**:
-   - `inventory`: Số lượng tồn kho và ngưỡng cảnh báo tối thiểu theo từng biến thể.
-   - `inventory_transactions`: Lịch sử nhập, xuất, giữ chỗ và hoàn kho.
-4. **Giỏ hàng (Cart)**:
-   - `carts`: Giỏ hàng phiên làm việc (Guest qua `session_id`, User qua `user_id`).
-   - `cart_items`: Các mặt hàng biến thể trong giỏ.
-5. **Đơn hàng & Thanh toán (Order & Payment)**:
-   - `orders`: Thông tin đơn hàng, mã đơn `TS-YYYYMMDD-XXXXX`, trạng thái giao dịch.
-   - `order_items`: Chi tiết các sản phẩm trong đơn tại thời điểm mua.
-   - `payments`: Giao dịch thanh toán COD / VietQR.
+- Đăng ký, đăng nhập, đăng xuất và quản lý tài khoản.
+- Xem danh mục, tìm kiếm, lọc, xem chi tiết sản phẩm/biến thể.
+- Giỏ hàng cho khách hoặc người dùng đã xác thực; tự đồng bộ sau đăng nhập.
+- Checkout COD hoặc VietQR demo, xem chi tiết và lịch sử đơn hàng.
+- Yêu thích sản phẩm và nhận gợi ý sản phẩm.
 
----
+### Admin
 
-## 🚀 3. Hướng Dẫn Cài Đặt & Chạy Hệ Thống
+- Dashboard tổng quan.
+- Quản lý danh mục, sản phẩm, biến thể, ảnh catalog và tồn kho.
+- Quản lý đơn hàng, trạng thái giao hàng và thanh toán COD/VietQR.
+- Quản lý voucher, người dùng, role và permission.
 
-### Yêu cầu tiên quyết:
-- Docker Desktop (hỗ trợ WSL2 hoặc Linux container).
+## Công nghệ
+
+| Nhóm | Công nghệ |
+| --- | --- |
+| Backend | PHP 8.3, Laravel 13, Laravel Sanctum |
+| Database | MySQL 8 / Amazon RDS MySQL |
+| Frontend | Blade, Vanilla JavaScript, CSS |
+| Object storage | Amazon S3 qua Flysystem AWS S3 adapter |
+| Runtime | Apache trên Amazon EC2, Docker cho local development |
+| Cloud | VPC, Security Groups, IAM Role, CloudWatch, AWS Billing |
+| Testing | PHPUnit 12 Feature và Unit tests |
+
+## Database
+
+Schema được quản lý bằng Laravel migrations. Các nhóm bảng nghiệp vụ gồm:
+
+- Identity: `roles`, `permissions`, `role_permissions`, `users`.
+- Catalog: `categories`, `products`, `product_variants`, `product_images`, `variant_images`, `inventory`.
+- Cart: `carts`, `cart_items`.
+- Order and payment: `orders`, `order_items`, `payments`, `payment_attempts`, `order_status_histories`.
+- Supporting features: `favorites`, `vouchers`, `voucher_redemptions`.
+
+Không thay đổi schema production trực tiếp. Mọi thay đổi schema phải qua migration, review và backup/rollback phù hợp.
+
+## Chạy local bằng Docker
+
+### Yêu cầu
+
+- Docker Desktop và Docker Compose.
 - Git.
 
-### Các bước khởi chạy với Docker:
+### Khởi động
 
-1. **Khởi động các container**:
-   ```bash
-   cd aws-ecommerce-platform-laravel
-   docker compose up -d
-   ```
-   Hệ thống gồm 2 container:
-   - `mysql`: MySQL 8.4 (host port mặc định `3307`).
-   - `app`: PHP 8.3 + Laravel (host port mặc định `8000`).
+```bash
+cp .env.example .env
+docker compose up -d --build
+docker compose exec app php artisan migrate --seed
+```
 
-2. **Chạy Migration & Seeder (Tạo bảng và dữ liệu mẫu)**:
-   ```bash
-   docker compose exec app php artisan migrate
-   docker compose exec app php artisan db:seed --force
-   ```
+Mở storefront tại `http://localhost:8000` và Admin tại `http://localhost:8000/admin`.
 
-3. **Truy cập ứng dụng**:
-   - Cửa hàng (Storefront): [http://localhost:8000](http://localhost:8000)
-   - Trang quản trị (Admin): [http://localhost:8000/admin](http://localhost:8000/admin)
+Các giá trị trong `.env` chỉ dành cho local. Không commit `.env` hoặc sao chép credentials từ AWS vào source.
 
----
+## Testing và quality checks
 
-## 🔑 4. Tài Khoản Trải Nghiệm Mẫu (Demo Credentials)
+Static checks có thể chạy không thay đổi dữ liệu:
 
-| Vai trò | Email đăng nhập | Mật khẩu | Quyền hạn |
-| :--- | :--- | :--- | :--- |
-| **Quản trị viên (Admin)** | `admin@techshop.vn` | `admin123` | Toàn quyền quản trị hệ thống (8 permissions) |
-| **Khách hàng mẫu (Customer)** | `customer@example.com` | `customer123` | Mua sắm, quản lý giỏ hàng, xem đơn hàng cá nhân |
+```bash
+composer validate --no-check-publish
+php artisan route:list
+find app config routes database/migrations tests -name '*.php' -print0 | xargs -0 -n1 php -l
+```
 
----
+Repository có Feature tests cho authentication, CSRF, Admin access, cart, checkout/VietQR, catalog image và recommendation.
 
-## 🌐 5. Danh Sách Tuyến Đường Web & Giao Diện (17 MPA Views)
+> `php artisan test` có thể tạo, sửa hoặc xóa dữ liệu trong database test. Chỉ chạy sau khi xác nhận `DB_DATABASE` là database test cô lập, không phải local data quan trọng, RDS staging hoặc production.
 
-### Giao diện Khách hàng (Customer Storefront)
-- `/`: Trang chủ TechShop (Banner, Danh mục nổi bật, Sản phẩm bán chạy, Hàng mới về).
-- `/products`: Danh sách sản phẩm kèm bộ lọc đa năng (danh mục, mức giá, sắp xếp, tìm kiếm từ khóa `q`).
-- `/products/{slug}`: Chi tiết sản phẩm, chọn biến thể màu sắc/dung lượng, thông số kỹ thuật, thêm giỏ hàng.
-- `/cart`: Giỏ hàng trực quan, kiểm tra tình trạng tồn kho, tăng giảm số lượng.
-- `/checkout`: Trang đặt hàng, hiện có COD; VietQR/manual sẽ được bổ sung trước khi phát hành.
-- `/orders/return`: Tuyến dự kiến dành cho kết quả thanh toán trực tuyến.
-- `/orders/{orderNumber}`: Tra cứu trạng thái đơn hàng và lịch sử thanh toán.
-- `/login`: Đăng nhập tài khoản.
-- `/register`: Đăng ký tài khoản khách hàng mới.
-- `/account`: Hồ sơ cá nhân, đổi mật khẩu và danh sách đơn mua.
+## AWS deployment status
 
-### Giao diện Quản trị (Admin Dashboard)
-- `/admin`: Bảng điều khiển thống kê tổng quan doanh thu, đơn hàng, khách hàng, sản phẩm.
-- `/admin/categories`: Quản lý danh mục sản phẩm (thêm, sửa, xóa, bật/tắt).
-- `/admin/products`: Quản lý danh sách sản phẩm, biến thể và thư viện hình ảnh.
-- `/admin/inventory`: Theo dõi tồn kho thực tế và cập nhật số lượng nhập kho.
-- `/admin/orders`: Quản lý danh sách đơn hàng, xem chi tiết và chuyển đổi trạng thái đơn.
-- `/admin/payments`: Lịch sử giao dịch thanh toán.
-- `/admin/users`: Quản lý danh sách người dùng, vai trò và trạng thái tài khoản.
+Các cấu hình dưới đây đã được xác minh tại thời điểm thu thập evidence:
 
----
+- Amazon EC2 chạy Laravel qua Apache.
+- Website phục vụ tại `https://techshop-demo.duckdns.org`; HTTP chuyển hướng sang HTTPS và certificate do Let's Encrypt phát hành.
+- Amazon RDS MySQL chạy private; automated backup retention là 1 ngày.
+- Bucket S3 `aws-ecommerce-storage` có Block Public Access và SSE-S3 default encryption.
+- S3 Versioning đang `Disabled`; chưa có Lifecycle hoặc Replication rule.
+- EC2 sử dụng IAM Role; policy S3 được giới hạn theo prefix cần thiết.
+- CloudWatch có Log Groups/Log Streams của Laravel và Apache, cùng evidence metric EC2 CPU/network.
 
-## ⚡ 6. Tối Ưu Hóa Hiệu Năng V1 (Performance Enhancements)
-- **PHP OPcache (256MB)**: Tự động kích hoạt thông qua `docker-entrypoint.sh` và `opcache-recommended.ini`, tăng tốc độ đọc file trên Windows bind-mount lên gấp 10-15 lần.
-- **PHP CLI Multi-workers**: Cấu hình `PHP_CLI_SERVER_WORKERS=8` xử lý đồng thời các request API và static assets.
-- **Frontend Promise Deduplication**: `CatalogService` tự động lưu trữ và chia sẻ promise request, ngăn chặn gọi lặp API danh mục trên cùng một lượt tải trang.
-- **Asynchronous Initialization**: Giao diện khởi tạo các thành phần Header, Cart Badge và Session thông qua `Promise.allSettled`.
+Không có Application Load Balancer, CloudFront, Multi-AZ RDS hoặc Elastic IP trong phạm vi demo hiện tại. Không khẳng định CloudWatch dashboard/alarm, load testing hoặc cost forecast nếu chưa có evidence tương ứng.
+
+## Security principles
+
+- Không hard-code AWS keys, password, token hoặc private key.
+- RDS không public; chỉ cho phép database access từ phạm vi đã kiểm soát.
+- S3 giữ Block Public Access và encryption mặc định.
+- Dùng IAM Role trên EC2 thay vì long-lived access key.
+- Phân quyền Admin bằng middleware và permission; session/API authentication dùng Sanctum.
+- Không đưa Account ID, endpoint RDS, public IP, customer data hoặc log nhạy cảm vào tài liệu public.
+
+## Known limitations
+
+- Customer Account hiện có lỗi UI: trạng thái một số đơn hàng hiển thị `undefined`; không xem đây là chức năng đã PASS.
+- Chưa chạy PHPUnit trên database test cô lập được xác minh trong release hiện tại.
+- Chưa kiểm thử end-to-end S3 upload/delete trên AWS, load/performance test hoặc disaster-recovery restore.
+- S3 Versioning và Lifecycle chưa bật để tránh phát sinh chi phí ngoài phạm vi demo.
+- VietQR là luồng chuyển khoản demo; không phải payment gateway tự động xác thực giao dịch ngân hàng.
+
+## Repository workflow
+
+- `main` là nhánh chính thức duy nhất.
+- Mọi thay đổi source, database, AWS hoặc security phải tuân thủ [working_rule.md](working_rule.md) và [PROJECT_RULES.md](docs/project/PROJECT_RULES.md).
+- Trước release/deploy: review diff, kiểm tra secrets, chạy validation phù hợp và xác nhận rollback.
+- Evidence AWS và báo cáo học phần được quản lý ngoài Git source để tránh làm repository nặng hoặc chứa thông tin nhạy cảm.
+
+## Project scope
+
+Project ưu tiên demonstrable cloud architecture và các luồng e-commerce cốt lõi. Các hướng phát triển như CI/CD, CloudFront, ALB, Auto Scaling, dashboard/alarm hoàn chỉnh, Multi-AZ và backup/restore drills chỉ được thực hiện khi có yêu cầu, ngân sách và kế hoạch được duyệt.
